@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    image:
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:{{ POSTGRES_PASSWORD}}@db:5432/mydatabase
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
