@@ -55,9 +55,32 @@ jobs:
       - name: Connect to AWS instance and deploy
         run: |
           ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@ec2-13-53-216-240.eu-north-1.compute.amazonaws.com << 'EOF'
-            # Commands to execute on the EC2 instance
-            echo "Connected to AWS instance"
-            # You can include commands to pull the Docker image, run containers, etc.
+            # Install Docker if not installed
+            if ! command -v docker &> /dev/null
+            then
+              echo "Docker not found. Installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker $USER
+            fi
+
+            # Pull the Docker image
+            echo "Pulling Docker image..."
             docker pull sammyalade/hello-world
-            docker run -d --name my_container sammyalade/hello-world
+
+            # Stop and remove existing container if it exists
+            CONTAINER_NAME=my_container
+            if [ "$(docker ps -a -q -f name=${CONTAINER_NAME})" ]; then
+                echo "Container ${CONTAINER_NAME} exists. Stopping and removing it..."
+                docker stop ${CONTAINER_NAME}
+                docker rm ${CONTAINER_NAME}
+            else
+                echo "Container ${CONTAINER_NAME} does not exist."
+            fi
+
+            # Create and run new container
+            echo "Running new container..."
+            docker run -d --name ${CONTAINER_NAME} sammyalade/hello-world
           EOF
